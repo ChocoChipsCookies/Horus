@@ -119,7 +119,7 @@ end)
         player:CreateButton({
    Name = "Npc lock gui",
    CurrentValue = false,
-   Callback = function(Value)
+   Callback = function()
      loadstring(game:HttpGet("https://raw.githubusercontent.com/ChocoChipsCookies/AimLock/refs/heads/main/Test?token=GHSAT0AAAAAADAMYPBZ3HNJL4CYGKR5TEGSZ62QDSA"))()
 })
 
