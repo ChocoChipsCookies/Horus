@@ -1,3 +1,125 @@
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local PlaceName = game:GetService("AssetService"):GetGamePlacesAsync(game.GameId):GetCurrentPage()[1].Name
+local HttpService = game:GetService("HttpService")
+local LocalPlayer = Players.LocalPlayer
+
+getfenv().getgenv().PlaceName = PlaceName
+
+local Window
+local Esp
+local ESPCache = {}
+local ItemCache = {}
+
+local PlayerESP = {
+    Enabled = false,
+    Color = Color3.new(1, 1, 1),
+    Font = Enum.Font.SourceSansBold,
+    TextSize = 18,
+    ShowDistance = true,
+    ShowHealth = true
+}
+
+local CharmsESP = {
+    Enabled = false,
+    Color = Color3.new(1, 0, 0),
+    FillTransparency = 0.5,
+    OutlineTransparency = 0,
+    DepthMode = "AlwaysOnTop"
+}
+
+local ItemESP = {
+    Enabled = false,
+    Color = Color3.new(0, 1, 0),
+    FillTransparency = 0.3,
+    OutlineTransparency = 0
+}
+
+local SpeedSpoof = {
+    Enabled = false,
+    Value = 16,
+    MoveConnection = nil
+}
+
+local function CreateMainWindow()
+    Rayfield:Notify({
+        Title = "Hoshi Hub Loaded",
+        Content = "Exploit loaded for"..PlaceName,
+        Duration = 6.5,
+        Image = nil
+    })
+
+    Window = Rayfield:CreateWindow({
+        Name = "Hoshi Hub" .. PlaceName,
+        LoadingTitle = "Hoshi Hub" .. PlaceName,
+        LoadingSubtitle = "by Bruh_998",
+        Theme = "Default",
+        DisableRayfieldPrompts = true,
+        DisableBuildWarnings = true,
+        ConfigurationSaving = {
+            Enabled = true,
+            FileName = "HoshiHub" .. PlaceName
+        },
+        Discord = {
+            Enabled = false,
+            Invite = "nil",
+            RememberJoins = true
+        },
+    })
+    player = Window:CreateTab("Player", "user-round")
+    Esp = Window:CreateTab("ESP", "eye")
+end
+
+local function SetupESPTab()
+    
+    local function CreatePlayerESPControls()
+        player:CreateSection("Infinite Yield Gui")
+        Esp:CreateSection("Player ESP Settings")
+        Esp:CreateToggle({
+            Name = "Enable Player ESP",
+            CurrentValue = false,
+            Flag = "PlayerESPEnabled",
+            Callback = function(Value)
+                PlayerESP.Enabled = Value
+                for _, espData in pairs(ESPCache) do
+                    if espData.billboard then
+                        espData.billboard.Enabled = Value
+                    end
+                end
+            end
+        })
+           player:CreateButton({
+               Name = "Infinite Yield",
+               CurrentValue = false,
+               Callback = function(Value)
+                 loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+    end
+})
+        player:CreateSection("Interaction")
+              player:CreateToggle({
+               Name = "Instant Interact",
+               CurrentValue = false,
+               Callback = function(Value)
+               InstantInteractEnabled = Value
+               for _, prompt in pairs(workspace:GetDescendants()) do
+               if prompt:IsA("ProximityPrompt") then
+               prompt.HoldDuration = Value and 0 or 1
+               workspace.DescendantAdded:Connect(function(descendant)
+               if descendant:IsA("ProximityPrompt") then
+               descendant.HoldDuration = InstantInteractEnabled and 0 or 1
+    end
+end)
+
+            end
+        end
+    end
+})
+
+        player:CreateSection("NpcLock Gui")
+        player:CreateButton({
+   Name = "Npc lock gui",
+   Callback = function()
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 player.CameraMode = Enum.CameraMode.Classic
@@ -173,3 +295,335 @@ button.MouseButton1Click:Connect(function()
     end
 end)
    end,
+})
+
+        Esp:CreateColorPicker({
+            Name = "Text Color",
+            Color = PlayerESP.Color,
+            Flag = "PlayerESPColor",
+            Callback = function(Value)
+                PlayerESP.Color = Value
+            end
+        })
+
+        Esp:CreateSlider({
+            Name = "Text Size",
+            Range = {10, 24},
+            Increment = 1,
+            Suffix = "px",
+            CurrentValue = 18,
+            Flag = "PlayerESPSize",
+            Callback = function(Value)
+                PlayerESP.TextSize = Value
+            end
+        })
+    end
+
+    local function CreateDisplayOptions()
+        Esp:CreateSection("Display Options")
+        Esp:CreateToggle({
+            Name = "Show Distance",
+            CurrentValue = true,
+            Flag = "PlayerESPDistance",
+            Callback = function(Value)
+                PlayerESP.ShowDistance = Value
+            end
+        })
+
+        Esp:CreateToggle({
+            Name = "Show Health",
+            CurrentValue = true,
+            Flag = "PlayerESPHealth",
+            Callback = function(Value)
+                PlayerESP.ShowHealth = Value
+            end
+        })
+    end
+
+    local function CreateCharmsControls()
+        Esp:CreateSection("Visual Settings")
+        Esp:CreateToggle({
+            Name = "Charms ESP",
+            CurrentValue = false,
+            Flag = "CharmsESPEnabled",
+            Callback = function(Value)
+                CharmsESP.Enabled = Value
+                for _, espData in pairs(ESPCache) do
+                    if espData.highlight then
+                        espData.highlight.Enabled = Value
+                        espData.highlight.DepthMode = CharmsESP.DepthMode
+                    end
+                end
+            end
+        })
+
+        Esp:CreateColorPicker({
+            Name = "Charms Color",
+            Color = CharmsESP.Color,
+            Flag = "CharmsESPColor",
+            Callback = function(Value)
+                CharmsESP.Color = Value
+                for _, espData in pairs(ESPCache) do
+                    if espData.highlight then
+                        espData.highlight.FillColor = Value
+                        espData.highlight.OutlineColor = Value
+                    end
+                end
+            end
+        })
+
+        Esp:CreateDropdown({
+            Name = "Outline Mode",
+            Options = {"Solid", "Neon", "Classic"},
+            CurrentValue = "Solid",
+            Flag = "CharmsOutlineMode",
+            Callback = function(Value)
+                for _, espData in pairs(ESPCache) do
+                    if espData.highlight then
+                        if Value == "Neon" then
+                            espData.highlight.OutlineTransparency = 0
+                            espData.highlight.FillTransparency = 0.2
+                        elseif Value == "Classic" then
+                            espData.highlight.OutlineTransparency = 0.5
+                        end
+                    end
+                end
+            end
+        })
+
+        Esp:CreateSlider({
+            Name = "Fill Transparency",
+            Range = {0, 1},
+            Increment = 0.1,
+            CurrentValue = 0.5,
+            Flag = "CharmsFill",
+            Callback = function(Value)
+                CharmsESP.FillTransparency = Value
+                for _, espData in pairs(ESPCache) do
+                    if espData.highlight then
+                        espData.highlight.FillTransparency = Value
+                    end
+                end
+            end
+        })
+
+        Esp:CreateSlider({
+            Name = "Outline Transparency",
+            Range = {0, 1},
+            Increment = 0.1,
+            CurrentValue = 0,
+            Flag = "CharmsOutline",
+            Callback = function(Value)
+                CharmsESP.OutlineTransparency = Value
+                for _, espData in pairs(ESPCache) do
+                    if espData.highlight then
+                        espData.highlight.OutlineTransparency = Value
+                    end
+                end
+            end
+        })
+
+        Esp:CreateSection("Advanced Charms")
+
+        Esp:CreateToggle({
+            Name = "Pulse Effect",
+            CurrentValue = false,
+            Flag = "CharmsPulse",
+            Callback = function(Value)
+                CharmsESP.PulseEnabled = Value
+            end
+        })
+
+        Esp:CreateSlider({
+            Name = "Pulse Speed",
+            Range = {1, 10},
+            Increment = 1,
+            CurrentValue = 5,
+            Flag = "CharmsPulseSpeed",
+            Callback = function(Value)
+                CharmsESP.PulseSpeed = Value
+            end
+        })
+
+        Esp:CreateToggle({
+            Name = "Dynamic Glow",
+            CurrentValue = false,
+            Flag = "CharmsGlow",
+            Callback = function(Value)
+                CharmsESP.GlowEnabled = Value
+                for _, espData in pairs(ESPCache) do
+                    if espData.highlight then
+                        espData.highlight.FillTransparency = Value and 0.8 or CharmsESP.FillTransparency
+                    end
+                end
+            end
+        })
+    end
+
+    local function CreateItemESPControls()
+        Esp:CreateSection("Item ESP Settings")
+        
+        Esp:CreateToggle({
+            Name = "Enable Item ESP",
+            CurrentValue = false,
+            Flag = "ItemESPEnabled",
+            Callback = function(Value)
+                ItemESP.Enabled = Value
+                for _, item in pairs(ItemCache) do
+                    if item.highlight then
+                        item.highlight.Enabled = Value
+                    end
+                end
+            end
+        })
+
+        Esp:CreateColorPicker({
+            Name = "Item Color",
+            Color = ItemESP.Color,
+            Flag = "ItemESPColor",
+            Callback = function(Value)
+                ItemESP.Color = Value
+                for _, item in pairs(ItemCache) do
+                    if item.highlight then
+                        item.highlight.FillColor = Value
+                        item.highlight.OutlineColor = Value
+                    end
+                end
+            end
+        })
+
+        Esp:CreateSlider({
+            Name = "Item Fill Transparency",
+            Range = {0, 1},
+            Increment = 0.1,
+            CurrentValue = 0.3,
+            Flag = "ItemFill",
+            Callback = function(Value)
+                ItemESP.FillTransparency = Value
+                for _, item in pairs(ItemCache) do
+                    if item.highlight then
+                        item.highlight.FillTransparency = Value
+                    end
+                end
+            end
+        })
+
+        Esp:CreateSlider({
+            Name = "Item Outline Transparency",
+            Range = {0, 1},
+            Increment = 0.1,
+            CurrentValue = 0,
+            Flag = "ItemOutline",
+            Callback = function(Value)
+                ItemESP.OutlineTransparency = Value
+                for _, item in pairs(ItemCache) do
+                    if item.highlight then
+                        item.highlight.OutlineTransparency = Value
+                    end
+                end
+            end
+        })
+
+        Esp:CreateToggle({
+            Name = "Show Name",
+            CurrentValue = false,
+            Flag = "ItemShowName",
+            Callback = function(Value)
+                ItemESP.ShowName = Value
+            end
+        })
+
+        Esp:CreateToggle({
+            Name = "Show Distance",
+            CurrentValue = false,
+            Flag = "ItemShowDistance",
+            Callback = function(Value)
+                ItemESP.ShowDistance = Value
+            end
+        })
+
+        Esp:CreateToggle({
+            Name = "Proximity Collection",
+            CurrentValue = false,
+            Flag = "ItemSuckEnabled",
+            Callback = function(Value)
+                print("DETECTED LOL")
+            end
+        })
+    end
+
+    CreatePlayerESPControls()
+    CreateDisplayOptions()
+    CreateCharmsControls()
+    CreateItemESPControls()
+end
+
+local function SetupItemESP()
+    local runtimeItems = workspace:FindFirstChild("RuntimeItems")
+    if not runtimeItems then
+        Rayfield:Notify({
+            Title = "Item ESP Error",
+            Content = "RuntimeItems not found in workspace",
+            Duration = 6.5,
+            Image = "error"
+        })
+        return
+    end
+
+    local coreGui = game:GetService("CoreGui")
+    local function CreateInstance(className, props)
+        local obj = Instance.new(className)
+        for prop, value in pairs(props) do
+            obj[prop] = value
+        end
+        return obj
+    end
+
+    local function CreateItemHighlight(item)
+        local highlight = CreateInstance("Highlight", {
+            FillColor = ItemESP.Color,
+            OutlineColor = ItemESP.Color,
+            FillTransparency = ItemESP.FillTransparency,
+            OutlineTransparency = ItemESP.OutlineTransparency,
+            Adornee = item,
+            Enabled = ItemESP.Enabled,
+            Parent = item
+        })
+
+        local billboard = CreateInstance("BillboardGui", {
+            Adornee = item,
+            Size = UDim2.fromOffset(200, 50),
+            StudsOffset = Vector3.new(0, 2.5, 0),
+            AlwaysOnTop = true,
+            ResetOnSpawn = false,
+            Enabled = ItemESP.Enabled,
+            Parent = coreGui
+        })
+
+        local textLabel = CreateInstance("TextLabel", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            TextColor3 = ItemESP.Color,
+            TextSize = 14,
+            Font = Enum.Font.SourceSansBold,
+            Parent = billboard
+        })
+
+        local entry = {
+            highlight = highlight,
+            billboard = billboard,
+            textLabel = textLabel,
+            connection = item.AncestryChanged:Connect(function()
+                if not item.Parent then
+                    highlight:Destroy()
+                    billboard:Destroy()
+                    ItemCache[item] = nil
+                end
+            end)
+        }
+
+        entry.renderConnection = RunService.RenderStepped:Connect(function()
+            if not ItemESP.Enabled or not item.Parent then
+                billboard.Enabled = false
+                return
+          
