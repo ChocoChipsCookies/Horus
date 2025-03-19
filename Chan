@@ -118,9 +118,9 @@ end)
         player:CreateSection("NpcLock Gui")
         player:CreateButton({
    Name = "Npc lock gui",
-   Callback = function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ChocoChipsCookies/AimLock/refs/heads/main/Test?token=GHSAT0AAAAAADAMYPBZ3HNJL4CYGKR5TEGSZ62QDSA"))()
-   end,
+   CurrentValue = false,
+   Callback = function(Value)
+     loadstring(game:HttpGet("https://raw.githubusercontent.com/ChocoChipsCookies/AimLock/refs/heads/main/Test?token=GHSAT0AAAAAADAMYPBZ3HNJL4CYGKR5TEGSZ62QDSA"))()
 })
 
         Esp:CreateColorPicker({
