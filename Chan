@@ -94,8 +94,6 @@ local function SetupESPTab()
                CurrentValue = false,
                Callback = function(Value)
                  loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
-          end,
-       end
 })
         player:CreateSection("Interaction")
               player:CreateToggle({
